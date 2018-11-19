@@ -19,7 +19,7 @@ public class PluginApplication extends Application {
     @Override
     protected void attachBaseContext(Context base) {
         super.attachBaseContext(base);
-     //   AMSHookHelper.hookAMS(base);
+        AMSHookHelper.hookAMS();
     }
 
 }

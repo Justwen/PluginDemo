@@ -9,8 +9,6 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        AMSHookHelper.hook();
-        startActivity(new Intent(this, StubActivity.class));
+        startActivity(new Intent(this, PluginActivity.class));
     }
 }
