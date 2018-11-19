@@ -3,11 +3,14 @@ package com.justwen.plugin;
 import android.content.Context;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
+import android.util.Log;
+
+import com.justwen.plugin.loader.PluginLoader;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 /**
  * Instrumented test, which will execute on an Android device.
@@ -23,4 +26,16 @@ public class ExampleInstrumentedTest {
 
         assertEquals("com.justwen.plugin", appContext.getPackageName());
     }
+
+    @Test
+    public void testPlugin() {
+        try {
+            ClassLoader classLoader = PluginLoader.extractPlugin("plugin-debug.apk");
+            Class clz = classLoader.loadClass("justwen.plugin.PluginDemo");
+            Log.d("plugin", clz.newInstance().toString());
+        } catch (ClassNotFoundException | IllegalAccessException | InstantiationException e) {
+            e.printStackTrace();
+        }
+    }
+
 }
