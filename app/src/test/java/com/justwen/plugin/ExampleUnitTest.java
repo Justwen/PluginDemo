@@ -1,5 +1,7 @@
 package com.justwen.plugin;
 
+import com.justwen.plugin.loader.PluginLoader;
+
 import org.junit.Test;
 
 import static org.junit.Assert.*;
@@ -12,6 +14,15 @@ import static org.junit.Assert.*;
 public class ExampleUnitTest {
     @Test
     public void addition_isCorrect() {
+
+        try {
+            ClassLoader classLoader = PluginLoader.extractPlugin("plugin.apk");
+            Object obj = classLoader.loadClass("justwen.plugin.PluginDemo");
+            System.out.println(obj.toString());
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+
         assertEquals(4, 2 + 2);
     }
 }
