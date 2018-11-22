@@ -23,7 +23,10 @@ import dalvik.system.DexClassLoader;
 public class PluginLoader {
 
     public static ClassLoader extractPlugin(String plugin) {
-        Context context = PluginApplication.sContext;
+        return extractPlugin(plugin, PluginApplication.sContext);
+    }
+
+    public static ClassLoader extractPlugin(String plugin, Context context) {
         File extractFile = null;
         try {
             extractFile = context.getFileStreamPath(plugin);
@@ -45,6 +48,7 @@ public class PluginLoader {
         File fileRelease = context.getDir("dex", Context.MODE_PRIVATE);
         return new DexClassLoader(dexPath, fileRelease.getAbsolutePath(), libPath, context.getClassLoader());
     }
+
 
     private static String unzipLibraryFile(String zipFile, String targetDir) {
         StringBuilder builder = new StringBuilder();

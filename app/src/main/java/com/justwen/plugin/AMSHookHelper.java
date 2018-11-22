@@ -1,20 +1,26 @@
 package com.justwen.plugin;
 
 import android.app.ActivityManager;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Handler;
 import android.os.Message;
 
+import com.justwen.plugin.loader.PluginLoader;
+
+import java.lang.reflect.Array;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
+
+import dalvik.system.BaseDexClassLoader;
 
 /**
  * Created by Justwen on 2018/11/18.
  */
 public class AMSHookHelper {
 
-    public static void hook() {
+    public static void hook(Context context) {
         hookAMS();
         hookHandler();
     }
@@ -59,13 +65,43 @@ public class AMSHookHelper {
                     if (intent != null) {
                         // 还原intent
                         Intent realIntent = intent.getParcelableExtra("new_intent");
-                        intent.setComponent(realIntent.getComponent());
+                        if (realIntent != null) {
+                            intent.setComponent(realIntent.getComponent());
+                        }
                     }
                 }
                 handler.handleMessage(msg);
                 return true;
             }
         });
+    }
+
+    public static void hookClassLoader(Context context) {
+        BaseDexClassLoader cl = (BaseDexClassLoader) context.getClassLoader();
+
+        Object dexPathList = ReflectUtils.getValue(cl.getClass().getSuperclass(), cl, "pathList");
+        Object elements = ReflectUtils.getValue(dexPathList.getClass(), dexPathList, "dexElements");
+
+        ClassLoader pluginClassLoader = PluginLoader.extractPlugin("plugin-debug.apk", context);
+        Object pluginDexPathList = ReflectUtils.getValue(pluginClassLoader.getClass().getSuperclass(), pluginClassLoader, "pathList");
+        Object pluginElements = ReflectUtils.getValue(pluginDexPathList.getClass(), pluginDexPathList, "dexElements");
+
+        //合并elements
+        Object newElements = Array.newInstance(Array.get(elements, 0).getClass(), Array.getLength(elements) + Array.getLength(pluginElements));
+
+        int i;
+        for (i = 0; i < Array.getLength(pluginElements); i++) {
+            Array.set(newElements, i, Array.get(pluginElements, i));
+        }
+
+        for (int j = 0; j < Array.getLength(elements); j++) {
+            Array.set(newElements, i, Array.get(elements, j));
+            i++;
+        }
+
+        ReflectUtils.setValue(dexPathList.getClass(), dexPathList, "dexElements", newElements);
+
+
     }
 
 }
