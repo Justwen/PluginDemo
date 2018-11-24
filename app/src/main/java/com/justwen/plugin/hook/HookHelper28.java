@@ -1,4 +1,4 @@
-package com.justwen.plugin;
+package com.justwen.plugin.hook;
 
 import android.app.ActivityManager;
 import android.content.Context;
@@ -6,26 +6,31 @@ import android.content.Intent;
 import android.os.Handler;
 import android.os.Message;
 
+import com.justwen.plugin.PluginApplication;
+import com.justwen.plugin.ReflectUtils;
+import com.justwen.plugin.StubActivity;
 import com.justwen.plugin.loader.PluginLoader;
 
 import java.lang.reflect.Array;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
+import java.util.List;
 
 import dalvik.system.BaseDexClassLoader;
 
 /**
- * Created by Justwen on 2018/11/18.
+ * Created by Justwen on 2018/11/24.
  */
-public class AMSHookHelper {
+public class HookHelper28 {
 
-    public static void hook(Context context) {
+    public static void startHook(Context context) {
         hookAMS();
         hookHandler();
+        hookClassLoader(context);
     }
 
-    public static void hookAMS() {
+    private static void hookAMS() {
         final Object obj = ReflectUtils.getStaticFieldObject(ActivityManager.class, "IActivityManagerSingleton");
         final Object service = ReflectUtils.invokeMethod("android.util.Singleton", obj, "get");
         Object proxy = Proxy.newProxyInstance(Thread.currentThread().getClass().getClassLoader(), service.getClass().getInterfaces(), new InvocationHandler() {
@@ -60,20 +65,31 @@ public class AMSHookHelper {
         ReflectUtils.setValue(Handler.class, handler, "mCallback", new Handler.Callback() {
             @Override
             public boolean handleMessage(Message msg) {
-                if (msg.what == 100) {
-                    Intent intent = (Intent) ReflectUtils.getValue(msg.obj.getClass(), msg.obj, "intent");
-                    if (intent != null) {
-                        // 还原intent
-                        Intent realIntent = intent.getParcelableExtra("new_intent");
-                        if (realIntent != null) {
-                            intent.setComponent(realIntent.getComponent());
+                if (msg.what == 159) {
+                    Object obj = msg.obj;
+                    List<Object> mActivityCallbacks = (List<Object>) ReflectUtils.getValue(obj.getClass(), obj, "mActivityCallbacks");
+                    if (!mActivityCallbacks.isEmpty()) {
+                        String className = "android.app.servertransaction.LaunchActivityItem";
+                        if (mActivityCallbacks.get(0).getClass().getCanonicalName().equals(className)) {
+                            Object object = mActivityCallbacks.get(0);
+                            Intent intent = (Intent) ReflectUtils.getValue(object.getClass(), object, "mIntent");
+                            if (intent != null) {
+                                Intent target = intent.getParcelableExtra("new_intent");
+                                if (target != null) {
+                                    intent.setComponent(target.getComponent());
+                                }
+                            }
+
                         }
                     }
+
                 }
                 handler.handleMessage(msg);
                 return true;
             }
         });
+
+
     }
 
     public static void hookClassLoader(Context context) {
@@ -100,8 +116,5 @@ public class AMSHookHelper {
         }
 
         ReflectUtils.setValue(dexPathList.getClass(), dexPathList, "dexElements", newElements);
-
-
     }
-
 }

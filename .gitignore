@@ -21,3 +21,5 @@ gradle.properties
 /.idea
 .idea/gradle.xml
 .idea/gradle.xml
+.idea/caches/build_file_checksums.ser
+.idea/gradle.xml
